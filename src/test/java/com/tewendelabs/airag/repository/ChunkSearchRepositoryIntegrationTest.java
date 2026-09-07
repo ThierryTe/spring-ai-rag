@@ -21,8 +21,7 @@ class ChunkSearchRepositoryIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void insertsAndFindsChunkWithinAuthorizedDepartments() {
-        Integer departmentId = jdbcTemplate.queryForObject(
-                "SELECT id FROM departments WHERE code = 'GENERAL'", Integer.class);
+        Integer departmentId = createTestDepartment();
         UUID documentId = UUID.randomUUID();
         jdbcTemplate.update("""
                 INSERT INTO documents (id, department_id, filename, title)
@@ -45,10 +44,8 @@ class ChunkSearchRepositoryIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void doesNotReturnChunksOutsideAuthorizedDepartments() {
-        Integer generalId = jdbcTemplate.queryForObject(
-                "SELECT id FROM departments WHERE code = 'GENERAL'", Integer.class);
-        Integer financeId = jdbcTemplate.queryForObject(
-                "SELECT id FROM departments WHERE code = 'FINANCE'", Integer.class);
+        Integer generalId = createTestDepartment();
+        Integer financeId = createTestDepartment();
         UUID documentId = UUID.randomUUID();
         jdbcTemplate.update("""
                 INSERT INTO documents (id, department_id, filename, title)
@@ -90,5 +87,17 @@ class ChunkSearchRepositoryIntegrationTest extends AbstractIntegrationTest {
 
         assertThat(results).hasSize(1);
         assertThat(results.get(0).chunkId()).isEqualTo(chunkId);
+    }
+
+    // Cree un departement jetable dedie a un seul test, plutot que de reutiliser les
+    // departements seedes (GENERAL/FINANCE) partages par toute la suite : le contexte Spring et
+    // le conteneur Postgres sont partages entre toutes les classes de test (voir
+    // AbstractIntegrationTest), et d'autres tests (IngestionPipelineIntegrationTest notamment)
+    // inserent de vrais chunks dans GENERAL sans jamais nettoyer, ce qui rend les assertions sur
+    // la taille des resultats non-deterministes selon l'ordre d'execution.
+    private Integer createTestDepartment() {
+        return jdbcTemplate.queryForObject("""
+                INSERT INTO departments (code, label) VALUES (?, ?) RETURNING id
+                """, Integer.class, "TEST-" + UUID.randomUUID(), "Test department");
     }
 }
