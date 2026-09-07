@@ -1,0 +1,54 @@
+
+services:
+  app:
+    image: ghcr.io/thierryte/spring-ai-multitenant-rag:latest
+    container_name: aiassistant-app
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB_HOST: postgres
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: aiassistant-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB_NAME}
+      POSTGRES_USER: ${POSTGRES_USER_NAME}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    volumes:
+      - aiassistant-pgdata-prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER_NAME} -d ${POSTGRES_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: aiassistant-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      # Bind localhost uniquement : pas de reverse proxy/TLS devant ce VPS (voir docs/DEPLOY.md),
+      # et pgAdmin donne un acces admin direct a la base - contrairement au port 8080 de l'app,
+      # on ne l'expose pas publiquement. Acces via tunnel SSH (voir docs/DEPLOY.md).
+      - "127.0.0.1:5050:80"
+    volumes:
+      - aiassistant-pgadmin-data-prod:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  aiassistant-pgdata-prod:
+  aiassistant-pgadmin-data-prod:
