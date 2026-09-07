@@ -36,6 +36,7 @@
         <springdoc.version>2.8.13</springdoc.version>
         <jacoco.version>0.8.12</jacoco.version>
         <sonar-maven-plugin.version>5.1.0.4751</sonar-maven-plugin.version>
+        <sonar.projectKey>ai-rag-backend</sonar.projectKey>
         <sonar.coverage.jacoco.xmlReportPaths>
             ${project.build.directory}/site/jacoco/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
