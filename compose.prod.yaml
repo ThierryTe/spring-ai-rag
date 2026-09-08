@@ -1,7 +1,7 @@
 
 services:
   app:
-    image: ghcr.io/thierryte/spring-ai-multitenant-rag:latest
+    image: ghcr.io/thierryte/spring-ai-rag:latest
     container_name: aiassistant-app
     restart: unless-stopped
     env_file: .env
@@ -39,9 +39,6 @@ services:
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
       PGADMIN_CONFIG_SERVER_MODE: "False"
     ports:
-      # Bind localhost uniquement : pas de reverse proxy/TLS devant ce VPS (voir docs/DEPLOY.md),
-      # et pgAdmin donne un acces admin direct a la base - contrairement au port 8080 de l'app,
-      # on ne l'expose pas publiquement. Acces via tunnel SSH (voir docs/DEPLOY.md).
       - "127.0.0.1:5050:80"
     volumes:
       - aiassistant-pgadmin-data-prod:/var/lib/pgadmin
