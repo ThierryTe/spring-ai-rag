@@ -30,6 +30,8 @@ jobs:
           POSTGRES_DB_NAME: airagdb
           POSTGRES_USER_NAME: airaguser
           POSTGRES_PASSWORD: test-password
+          APP_CORS_ALLOWED_ORIGINS: http://localhost:4200
+
         run: mvn -B test
 
       - name: Set up Docker Buildx
