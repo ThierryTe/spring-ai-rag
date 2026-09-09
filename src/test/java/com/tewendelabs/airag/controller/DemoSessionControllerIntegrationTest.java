@@ -1,6 +1,7 @@
 package com.tewendelabs.airag.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.endsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -52,6 +53,9 @@ class DemoSessionControllerIntegrationTest extends com.tewendelabs.airag.Abstrac
         mvc.perform(post("/api/demo/sessions"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.sessionId").exists())
+                // expiresAt doit porter un fuseau explicite (UTC) : sans "Z", le frontend
+                // interprete la date comme une heure locale du navigateur (voir toResponse()).
+                .andExpect(jsonPath("$.expiresAt", endsWith("Z")))
                 .andExpect(jsonPath("$.maxQuestions").value(5))
                 .andExpect(jsonPath("$.maxDocuments").value(2))
                 .andExpect(jsonPath("$.questionsUsed").value(0))
