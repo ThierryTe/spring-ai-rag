@@ -1,5 +1,6 @@
 package com.tewendelabs.airag.controller;
 
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 
@@ -62,8 +63,17 @@ public class DemoSessionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(session));
     }
 
+    /**
+     * {@code DemoSession.expiresAt} est un {@link java.time.LocalDateTime} (heure murale du
+     * serveur, sans fuseau). Serialise tel quel, le JSON ne porte aucun "Z"/offset : cote
+     * frontend, {@code new Date(...)} interprete alors la chaine comme une heure locale du
+     * *navigateur*, ce qui corrompt l'expiration des qu'un visiteur est dans un fuseau different.
+     * On convertit explicitement en UTC ({@link java.time.Instant}, serialise avec "Z" par
+     * Jackson) au moment de construire la reponse, sans toucher a la couche de persistance.
+     */
     private DemoSessionResponse toResponse(DemoSession session) {
-        return new DemoSessionResponse(session.getId(), session.getExpiresAt(),
+        return new DemoSessionResponse(session.getId(),
+                session.getExpiresAt().atZone(ZoneId.systemDefault()).toInstant(),
                 demoSessionProperties.maxQuestions(), demoSessionProperties.maxDocuments(),
                 session.getQuestionsUsed(), session.getDocumentsUsed());
     }
