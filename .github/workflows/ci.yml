@@ -39,11 +39,13 @@ jobs:
         run: mvn -B sonar:sonar -Dsonar.host.url="$SONAR_HOST_URL" -Dsonar.token="$SONAR_TOKEN"
 
   # Golden dataset RAG contre un vrai modele OpenAI (cout reel, pas mocke) : necessite le secret
-  # OPENAI_EVAL_API_KEY ; job ignore si ce secret n'est pas configure sur le repo.
+  # OPENAI_EVAL_API_KEY. Le contexte "secrets" n'est pas utilisable dans un if: de job (limitation
+  # GitHub Actions) : sans ce secret, RagGoldenEvalTest s'auto-desactive proprement via
+  # @EnabledIfEnvironmentVariable (0 test execute, build vert) plutot que d'etre saute au niveau
+  # du job.
   rag-eval:
     runs-on: ubuntu-latest
     environment: production
-    if: ${{ secrets.OPENAI_EVAL_API_KEY != '' }}
     steps:
       - uses: actions/checkout@v4
         with:
