@@ -16,6 +16,8 @@ public interface QueryLogRepository extends JpaRepository<QueryLog, UUID> {
 
     List<QueryLog> findByUserIdOrderByCreatedAtDesc(UUID userId);
 
+    long countByUserIdAndCreatedAtAfter(UUID userId, LocalDateTime since);
+
     /**
      * Alimente le dashboard admin (AdminObservabilityService) : trafic demo et authentifie
      * confondus (userId et demoSessionId ne sont pas selectionnes ici, l'agregation ne distingue

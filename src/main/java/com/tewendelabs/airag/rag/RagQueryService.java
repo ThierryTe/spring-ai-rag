@@ -2,6 +2,7 @@ package com.tewendelabs.airag.rag;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -82,6 +83,7 @@ public class RagQueryService {
         long start = System.currentTimeMillis();
 
         try {
+            checkDailyQuota(userId);
             sensitiveTopicGuard.check(request.question());
             List<Integer> departmentIds = departmentAccessGuard.resolveScope(user, request.departmentId());
 
@@ -100,7 +102,18 @@ public class RagQueryService {
             long latencyMs = System.currentTimeMillis() - start;
             String answer = refusalMessage(refusal.getReason());
             persistLog(user.getId(), null, request, false, refusal.getReason(), answer, List.of(), null, latencyMs);
+            if (refusal.getReason() == RefusalReason.QUOTA_EXCEEDED) {
+                throw new DemoQuotaExceededException(answer);
+            }
             return new ChatAnswerResponse(answer, List.of(), true, refusal.getReason(), latencyMs);
+        }
+    }
+
+    /** Quota anti-abus par compte (tous les comptes de ce deploiement sont des comptes de demo). */
+    private void checkDailyQuota(UUID userId) {
+        long usedToday = queryLogRepository.countByUserIdAndCreatedAtAfter(userId, LocalDate.now().atStartOfDay());
+        if (usedToday >= ragProperties.dailyQuestionQuotaPerUser()) {
+            throw new RagRefusalException(RefusalReason.QUOTA_EXCEEDED);
         }
     }
 
@@ -208,7 +221,8 @@ public class RagQueryService {
             case DEPARTMENT_FORBIDDEN -> "Vous n'avez pas acces aux documents de ce departement.";
             case NO_RELEVANT_CONTEXT -> "Je ne dispose pas d'information sur ce sujet dans les documents "
                     + "auxquels vous avez acces.";
-            case QUOTA_EXCEEDED -> "Vous avez atteint le nombre maximal de questions pour cette session demo.";
+            case QUOTA_EXCEEDED -> "Vous avez atteint le nombre maximal de questions autorisees pour cette "
+                    + "periode.";
             case SESSION_EXPIRED -> "Votre session demo a expire, veuillez en creer une nouvelle.";
         };
     }

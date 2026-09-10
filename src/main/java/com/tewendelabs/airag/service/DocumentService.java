@@ -7,7 +7,6 @@ import java.util.UUID;
 import com.tewendelabs.airag.exceptions.ForbiddenOperationException;
 import com.tewendelabs.airag.exceptions.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.tewendelabs.airag.entity.Department;
@@ -101,15 +100,10 @@ public class DocumentService {
         return document;
     }
 
-    @Transactional
+    /** Desactive : la base de connaissances est partagee entre tous les visiteurs de la demo. */
     public void delete(UUID userId, UUID documentId) {
-        User user = requireUser(userId);
-        requireUploadRole(user);
-        Document document = documentRepository.findById(documentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable"));
-        requireDepartmentAccess(user, document);
-        // Les chunks sont supprimes automatiquement (chunks.document_id ... ON DELETE CASCADE, V1).
-        documentRepository.delete(document);
+        throw new ForbiddenOperationException(
+                "Suppression de documents desactivee dans cet environnement de demonstration partage");
     }
 
     private void requireDepartmentAccess(User user, Document document) {
