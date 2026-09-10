@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,6 +39,7 @@ public class DocumentController {
     @Operation(summary = "Uploader un document", description = "Reserve aux roles MANAGER/ADMIN. Declenche "
             + "l'ingestion asynchrone (extraction, chunking, embeddings) ; le statut passe par "
             + "UPLOADED -> PROCESSING -> INDEXED/FAILED.")
+    @PreAuthorize("hasAnyRole('MANAGER','ADMIN')")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<DocumentUploadResponse> upload(
             @AuthenticationPrincipal UUID userId,
@@ -71,8 +73,9 @@ public class DocumentController {
         return toUploadResponse(documentService.getAuthorized(userId, id));
     }
 
-    @Operation(summary = "Supprimer un document", description = "Reserve aux roles MANAGER/ADMIN. "
-            + "Les chunks associes sont supprimes en cascade.")
+    @Operation(summary = "Supprimer un document", description = "Desactive dans cet environnement de "
+            + "demonstration partage : renvoie toujours 403.")
+    @PreAuthorize("hasAnyRole('MANAGER','ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@AuthenticationPrincipal UUID userId, @PathVariable UUID id) {
         documentService.delete(userId, id);

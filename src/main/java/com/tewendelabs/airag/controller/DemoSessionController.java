@@ -27,6 +27,7 @@ import com.tewendelabs.airag.entity.Document;
 import com.tewendelabs.airag.exceptions.InvalidDemoSessionException;
 import com.tewendelabs.airag.rag.RagQueryService;
 import com.tewendelabs.airag.service.DemoDocumentService;
+import com.tewendelabs.airag.service.DemoSessionRateLimiter;
 import com.tewendelabs.airag.service.DemoSessionService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,20 +46,24 @@ public class DemoSessionController {
     private final DemoDocumentService demoDocumentService;
     private final RagQueryService ragQueryService;
     private final DemoSessionProperties demoSessionProperties;
+    private final DemoSessionRateLimiter demoSessionRateLimiter;
 
     public DemoSessionController(DemoSessionService demoSessionService, DemoDocumentService demoDocumentService,
-            RagQueryService ragQueryService, DemoSessionProperties demoSessionProperties) {
+            RagQueryService ragQueryService, DemoSessionProperties demoSessionProperties,
+            DemoSessionRateLimiter demoSessionRateLimiter) {
         this.demoSessionService = demoSessionService;
         this.demoDocumentService = demoDocumentService;
         this.ragQueryService = ragQueryService;
         this.demoSessionProperties = demoSessionProperties;
+        this.demoSessionRateLimiter = demoSessionRateLimiter;
     }
 
     @Operation(summary = "Creer une session demo", description = "Accessible sans authentification. Retourne "
             + "l'identifiant de session a transmettre dans l'en-tete " + SESSION_HEADER + " sur les appels "
-            + "suivants.")
+            + "suivants. 429 si trop de sessions ont deja ete creees depuis cette adresse IP.")
     @PostMapping("/sessions")
     public ResponseEntity<DemoSessionResponse> createSession(HttpServletRequest httpRequest) {
+        demoSessionRateLimiter.checkAndConsume(httpRequest.getRemoteAddr());
         DemoSession session = demoSessionService.create(httpRequest.getRemoteAddr());
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(session));
     }

@@ -36,6 +36,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage(), req.getRequestURI());
     }
 
+    /**
+     * AuthorizationDeniedException (@PreAuthorize) etend cette classe. Sans ce handler explicite,
+     * elle serait interceptee par {@code handleUnexpected} (ExceptionHandlerExceptionResolver de
+     * DispatcherServlet, avant l'accessDeniedHandler de SecurityConfig) et renverrait 500.
+     */
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(
+            org.springframework.security.access.AccessDeniedException ex, HttpServletRequest req) {
+        return buildResponse(HttpStatus.FORBIDDEN, "Access denied", req.getRequestURI());
+    }
+
     @ExceptionHandler(FileValidationException.class)
     public ResponseEntity<ErrorResponse> handleFileValidation(FileValidationException ex, HttpServletRequest req) {
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), req.getRequestURI());

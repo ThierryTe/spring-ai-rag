@@ -21,7 +21,7 @@ import com.tewendelabs.airag.repository.DemoSessionRepository;
 class DemoSessionServiceTest {
 
     private final DemoSessionRepository demoSessionRepository = mock(DemoSessionRepository.class);
-    private final DemoSessionProperties properties = new DemoSessionProperties(5, 2, 2);
+    private final DemoSessionProperties properties = new DemoSessionProperties(5, 2, 2, 10);
     private final DemoSessionService service = new DemoSessionService(demoSessionRepository, properties);
 
     @Test
