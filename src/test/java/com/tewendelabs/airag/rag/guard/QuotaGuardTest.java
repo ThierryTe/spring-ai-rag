@@ -20,7 +20,7 @@ import com.tewendelabs.airag.repository.DemoSessionRepository;
 class QuotaGuardTest {
 
     private final DemoSessionRepository demoSessionRepository = mock(DemoSessionRepository.class);
-    private final DemoSessionProperties properties = new DemoSessionProperties(5, 2, 2);
+    private final DemoSessionProperties properties = new DemoSessionProperties(5, 2, 2, 10);
     private final QuotaGuard guard = new QuotaGuard(demoSessionRepository, properties);
 
     @Test

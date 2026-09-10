@@ -2,6 +2,7 @@ package com.tewendelabs.airag.controller;
 
 import java.util.UUID;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,6 +29,7 @@ public class AdminObservabilityController {
 
     @Operation(summary = "Resume d'observabilite", description = "Agrege tout le trafic RAG (demo et "
             + "authentifie confondus) des N derniers jours. Reserve aux ADMIN (403 sinon).")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/summary")
     public ObservabilitySummaryResponse summary(
             @AuthenticationPrincipal UUID userId,

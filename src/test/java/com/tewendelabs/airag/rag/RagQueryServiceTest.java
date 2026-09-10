@@ -67,7 +67,7 @@ class RagQueryServiceTest {
     private final ChatClient.ChatClientRequestSpec requestSpec = mock(ChatClient.ChatClientRequestSpec.class);
     private final ChatClient.CallResponseSpec callResponseSpec = mock(ChatClient.CallResponseSpec.class);
     private final QueryLogRepository queryLogRepository = mock(QueryLogRepository.class);
-    private final RagProperties ragProperties = new RagProperties(5, 0.5);
+    private final RagProperties ragProperties = new RagProperties(5, 0.5, 20);
     // Prix ronds pour que le cout attendu dans les tests se calcule de tete : 1$/1k tokens prompt,
     // 2$/1k tokens completion.
     private final RagCostProperties ragCostProperties = new RagCostProperties(1.0, 2.0);
@@ -133,6 +133,18 @@ class RagQueryServiceTest {
         assertThat(captor.getValue().getTokensUsed()).isEqualTo(70);
         assertThat(captor.getValue().getEstimatedCostUsd())
                 .isEqualByComparingTo(new java.math.BigDecimal("0.090000"));
+    }
+
+    @Test
+    void dailyQuotaExceeded_forAuthenticatedUser_persistsLogThenThrows429Exception() {
+        when(queryLogRepository.countByUserIdAndCreatedAtAfter(eq(user.getId()), any())).thenReturn(20L);
+
+        assertThatThrownBy(() -> service.answer(user.getId(), new ChatRequest("Une question", null)))
+                .isInstanceOf(com.tewendelabs.airag.exceptions.DemoQuotaExceededException.class);
+
+        verify(queryLogRepository).save(argThat(log -> log != null && !log.isAccessAllowed()
+                && "QUOTA_EXCEEDED".equals(log.getRefusalReason())));
+        verifyNoInteractions(sensitiveTopicGuard, embeddingModel, chunkSearchRepository, chatClient);
     }
 
     @Test

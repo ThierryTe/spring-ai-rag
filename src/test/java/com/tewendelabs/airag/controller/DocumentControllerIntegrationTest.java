@@ -129,7 +129,7 @@ class DocumentControllerIntegrationTest extends com.tewendelabs.airag.AbstractIn
     }
 
     @Test
-    void managerDeletesDocumentAndChunksCascade() throws Exception {
+    void deletionIsDisabledInSharedDemoEnvironment() throws Exception {
         Document doc = documentRepository.save(Document.builder()
                 .department(generalDepartment)
                 .filename("obsolete.txt")
@@ -139,9 +139,23 @@ class DocumentControllerIntegrationTest extends com.tewendelabs.airag.AbstractIn
 
         mvc.perform(delete("/api/documents/{id}", doc.getId())
                         .header("Authorization", "Bearer " + token))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isForbidden());
 
-        org.assertj.core.api.Assertions.assertThat(documentRepository.findById(doc.getId())).isEmpty();
+        org.assertj.core.api.Assertions.assertThat(documentRepository.findById(doc.getId())).isPresent();
+    }
+
+    @Test
+    void employeeCannotDelete() throws Exception {
+        Document doc = documentRepository.save(Document.builder()
+                .department(generalDepartment)
+                .filename("notes.txt")
+                .status(com.tewendelabs.airag.entity.DocumentStatus.UPLOADED)
+                .build());
+        String token = jwtService.generateToken(createUser("EMPLOYEE").getId());
+
+        mvc.perform(delete("/api/documents/{id}", doc.getId())
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
     }
 
     private User createUser(String roleCode) {
