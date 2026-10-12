@@ -1,4 +1,3 @@
-
 name: CI
 
 on:
@@ -89,7 +88,7 @@ jobs:
           POSTGRES_USER_NAME: airaguser
           POSTGRES_PASSWORD: test-password
           APP_CORS_ALLOWED_ORIGINS: http://localhost:4200
-        run: mvn -B test -Dgroups=eval -DexcludedGroups=
+        run: mvn -B test -Dgroups=eval -DexcludedGroups= -DfailIfNoTests=true
 
       - name: Verify golden dataset tests executed
         shell: bash
