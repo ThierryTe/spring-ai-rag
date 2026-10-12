@@ -6,8 +6,12 @@ on:
   pull_request:
     branches: [develop, main]
 
+permissions:
+  contents: read
+
 jobs:
   test:
+    name: Java Tests & SonarQube Quality Gate
     runs-on: ubuntu-latest
     environment: production
     steps:
