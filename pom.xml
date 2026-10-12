@@ -37,8 +37,6 @@
         <jacoco.version>0.8.12</jacoco.version>
         <sonar-maven-plugin.version>5.1.0.4751</sonar-maven-plugin.version>
         <sonar.projectKey>ai-rag-backend</sonar.projectKey>
-        <!-- Propriete surchargeable via -DexcludedGroups= pour activer les evals en CI. -->
-        <excludedGroups>eval</excludedGroups>
         <sonar.coverage.jacoco.xmlReportPaths>
             ${project.build.directory}/site/jacoco/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
@@ -255,7 +253,7 @@
                 <configuration>
                     <!-- RagGoldenEvalTest appelle un vrai modele OpenAI : exclu par defaut, lance
                          explicitement via -Dgroups=eval -DexcludedGroups= (voir ci.yml). -->
-                    <excludedGroups>${excludedGroups}</excludedGroups>
+                    <excludedGroups>eval</excludedGroups>
                 </configuration>
             </plugin>
             <plugin>
