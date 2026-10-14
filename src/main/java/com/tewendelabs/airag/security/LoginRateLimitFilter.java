@@ -6,10 +6,7 @@ import java.time.Duration;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.web.filter.OncePerRequestFilter;
-
-import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
-import io.github.bucket4j.Refill;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -59,13 +56,13 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
         chain.doFilter(request, response);
     }
 
-    private Bucket newBucket() {
-        Bandwidth limit = Bandwidth.classic(
-                MAX_ATTEMPTS,
-                Refill.greedy(MAX_ATTEMPTS, WINDOW));
 
+    private Bucket newBucket() {
         return Bucket.builder()
-                .addLimit(limit)
+                .addLimit(limit -> limit
+                        .capacity(MAX_ATTEMPTS)
+                        .refillGreedy(MAX_ATTEMPTS, WINDOW))
                 .build();
     }
+
 }
