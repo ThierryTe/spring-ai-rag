@@ -1,5 +1,6 @@
 package com.tewendelabs.airag.config;
 
+import com.tewendelabs.airag.security.LoginRateLimitFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -70,8 +71,13 @@ public class SecurityConfig {
                         // /actuator/prometheus.
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .anyRequest().authenticated())
-                .addFilterBefore(new JwtAuthenticationFilter(jwtService, userRepository),
+                .addFilterBefore(
+                        new JwtAuthenticationFilter(jwtService, userRepository),
                         UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(
+                        new LoginRateLimitFilter(),
+                        JwtAuthenticationFilter.class)
                 .build();
+
     }
 }
