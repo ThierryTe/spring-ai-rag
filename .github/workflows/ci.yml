@@ -33,6 +33,8 @@ jobs:
           POSTGRES_DB_NAME: airagdb
           POSTGRES_USER_NAME: airaguser
           POSTGRES_PASSWORD: test-password
+          MONITORING_USERNAME: ci-monitoring
+          MONITORING_PASSWORD_HASH: '$2a$10$XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
           APP_CORS_ALLOWED_ORIGINS: http://localhost:4200
         run: mvn -B verify
 
@@ -69,5 +71,7 @@ jobs:
           POSTGRES_DB_NAME: airagdb
           POSTGRES_USER_NAME: airaguser
           POSTGRES_PASSWORD: test-password
+          MONITORING_USERNAME: ci-monitoring
+          MONITORING_PASSWORD_HASH: '$2a$10$XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
           APP_CORS_ALLOWED_ORIGINS: http://localhost:4200
         run: mvn -B test -Dgroups=eval -DexcludedGroups=

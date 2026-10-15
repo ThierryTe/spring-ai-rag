@@ -1,11 +1,15 @@
-
 package com.tewendelabs.airag.security;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.concurrent.ConcurrentHashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.filter.OncePerRequestFilter;
+
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+
 import io.github.bucket4j.Bucket;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -16,15 +20,17 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
 
     private static final int MAX_ATTEMPTS = 5;
     private static final Duration WINDOW = Duration.ofMinutes(1);
-
-    private final ConcurrentHashMap<String, Bucket> bucketsByIp =
-            new ConcurrentHashMap<>();
+    private static final Logger log =
+            LoggerFactory.getLogger(LoginRateLimitFilter.class);
+    private final Cache<String, Bucket> bucketsByIp = Caffeine.newBuilder()
+            .expireAfterAccess(Duration.ofMinutes(15))
+            .maximumSize(10_000)
+            .build();
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         return !"POST".equalsIgnoreCase(request.getMethod())
-                || !"/api/auth/login".equals(
-                request.getServletPath());
+                || !"/api/auth/login".equals(request.getServletPath());
     }
 
     @Override
@@ -34,12 +40,10 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
             FilterChain chain)
             throws ServletException, IOException {
 
-        // Utiliser uniquement une adresse IP établie
-        // par l'infrastructure de confiance.
         String ip = request.getRemoteAddr();
+        log.info("Login rate limit - remoteAddr={}", ip);
 
-        Bucket bucket = bucketsByIp.computeIfAbsent(
-                ip, key -> newBucket());
+        Bucket bucket = bucketsByIp.get(ip, key -> newBucket());
 
         if (!bucket.tryConsume(1)) {
             response.setStatus(429);
@@ -56,7 +60,6 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
         chain.doFilter(request, response);
     }
 
-
     private Bucket newBucket() {
         return Bucket.builder()
                 .addLimit(limit -> limit
@@ -64,5 +67,4 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
                         .refillGreedy(MAX_ATTEMPTS, WINDOW))
                 .build();
     }
-
 }
