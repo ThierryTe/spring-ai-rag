@@ -1,9 +1,12 @@
 package com.tewendelabs.airag.config;
 
 import com.tewendelabs.airag.security.LoginRateLimitFilter;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -20,7 +23,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import com.tewendelabs.airag.repository.UserRepository;
 import com.tewendelabs.airag.security.JwtAuthenticationFilter;
 import com.tewendelabs.airag.security.JwtService;
-
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
@@ -39,6 +45,7 @@ public class SecurityConfig {
     }
 
     @Bean
+    @Order(2)
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtService jwtService,
             UserRepository userRepository) {
         return http
@@ -79,5 +86,51 @@ public class SecurityConfig {
                         JwtAuthenticationFilter.class)
                 .build();
 
+    }
+    @Bean
+    @Order(1)
+    SecurityFilterChain prometheusSecurityFilterChain(
+            HttpSecurity http,
+            @Qualifier("monitoringAuthenticationProvider")
+            AuthenticationProvider monitoringAuthenticationProvider
+    ) throws Exception {
+
+        return http
+                .securityMatcher("/actuator/prometheus")
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(s ->
+                        s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationProvider(monitoringAuthenticationProvider)
+                .authorizeHttpRequests(auth ->
+                        auth.anyRequest().hasRole("MONITORING"))
+                .httpBasic(Customizer.withDefaults())
+                .formLogin(AbstractHttpConfigurer::disable)
+                .build();
+    }
+    @Bean("monitoringUserDetailsService")
+    public UserDetailsService monitoringUserDetailsService(
+            @Value("${monitoring.username}") String username,
+            @Value("${monitoring.password-hash}") String passwordHash) {
+
+        return new InMemoryUserDetailsManager(
+                User.withUsername(username)
+                        .password(passwordHash)
+                        .roles("MONITORING")
+                        .build()
+        );
+    }
+
+    @Bean("monitoringAuthenticationProvider")
+    public AuthenticationProvider monitoringAuthenticationProvider(
+            @Qualifier("monitoringUserDetailsService")
+            UserDetailsService monitoringUserDetailsService,
+            PasswordEncoder passwordEncoder) {
+
+        DaoAuthenticationProvider provider =
+                new DaoAuthenticationProvider(monitoringUserDetailsService);
+
+        provider.setPasswordEncoder(passwordEncoder);
+
+        return provider;
     }
 }
