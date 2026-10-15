@@ -87,6 +87,7 @@ public class SecurityConfig {
                 .build();
 
     }
+    @SuppressWarnings("java:S112")
     @Bean
     @Order(1)
     SecurityFilterChain prometheusSecurityFilterChain(
