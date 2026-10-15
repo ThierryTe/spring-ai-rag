@@ -47,7 +47,7 @@ public class SecurityConfig {
     @Bean
     @Order(2)
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtService jwtService,
-            UserRepository userRepository) {
+            UserRepository userRepository) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
@@ -107,6 +107,7 @@ public class SecurityConfig {
                 .httpBasic(Customizer.withDefaults())
                 .formLogin(AbstractHttpConfigurer::disable)
                 .build();
+
     }
     @Bean("monitoringUserDetailsService")
     public UserDetailsService monitoringUserDetailsService(
